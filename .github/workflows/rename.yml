@@ -1,6 +1,9 @@
 name: Rename live schedule file
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/rename.yml]
 permissions:
   contents: write
 jobs:
@@ -12,6 +15,4 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git mv live-schedule-index.html index.html
-          git commit -m "Rename live-schedule-index.html to index.html"
-          git push
+          if [ -f live-schedule-index.html ]; then git mv live-schedule-index.html index.html; git commit -m "Rename live-schedule-index.html to index.html"; git push; else echo "already renamed"; fi

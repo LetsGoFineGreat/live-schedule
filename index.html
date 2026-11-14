@@ -1059,6 +1059,7 @@ function renderLB(){
         ? '<div class="stack" id="lbStack">' + ev.imgs.map(function(s, k){ return '<img class="' + (k === 0 ? "on" : "") + '" src="' + s + '" alt="' + ev.t.replace(/"/g,"") + ' のフライヤー" draggable="false">'; }).join("") + '</div>'
         : '<img src="' + ev.img + '" alt="' + ev.t.replace(/"/g,"") + ' のフライヤー" draggable="false">') + '<button class="lb-zoom-reset" id="lbZoomReset" type="button">元の大きさに戻す</button></div>' + (ev.imgs && ev.imgs.length > 1 ? '<div class="lb-dots" id="lbDots">' + ev.imgs.map(function(_, k){ return '<i class="' + (k === 0 ? "on" : "") + '"></i>'; }).join("") + '</div>' : '') + '<p class="lb-zoom-hint">ピンチ／ダブルタップで拡大できます</p>'
     : placeholderHTML(ev);
+  lbImgIdx = 0;
   startLbCycle(ev);
   resetZoom();
   document.getElementById("lbDate").innerHTML = fmtDate(ev) + countChip(ev);
@@ -1262,7 +1263,10 @@ document.addEventListener("keydown", function(e){
   else if (e.key === "ArrowLeft"){ if (!zoomIsActive()) stepLB(-1); }
   else if (e.key === "ArrowRight"){ if (!zoomIsActive()) stepLB(1); }
 });
-/* スワイプで前後の公演へ。ただし次の場合は移動しない：
+/* 横スワイプの割り当て：
+   ・複数画像の公演では、同じ公演の前後の画像へ（公演は切り替わらず、自動切り替えも止まる）
+   ・画像が1枚の公演では、前後の公演へ
+   ただし次の場合は移動しない：
    ・フライヤー拡大中（拡大・移動の操作と競合するため）
    ・ピンチなど2本指以上の操作を含むジェスチャ
    ・縦の動きが大きいジェスチャ（スクロール） */
@@ -1282,7 +1286,8 @@ lb.addEventListener("touchend", function(e){
   if (wasMulti || zoomIsActive()) return;
   if (Math.abs(dx) < 48) return;
   if (Math.abs(dy) > Math.abs(dx) * 0.6) return;
-  stepLB(dx < 0 ? 1 : -1);
+  var d = dx < 0 ? 1 : -1;
+  if (!stepLbImage(d)) stepLB(d);
 }, {passive:true});
 lb.addEventListener("touchcancel", function(){ touchX = null; touchY = null; touchMulti = false; }, {passive:true});
 
@@ -1315,22 +1320,38 @@ if (!reduceMotion){
   }, 600);
 }
 var lbTimer = null;
+var lbImgIdx = 0;
+function lbShowImage(n){
+  var stack = document.getElementById("lbStack");
+  if (!stack) return;
+  var imgs = stack.querySelectorAll("img");
+  if (imgs.length < 2) return;
+  var dots = document.getElementById("lbDots");
+  if (imgs[lbImgIdx]) imgs[lbImgIdx].classList.remove("on");
+  if (dots && dots.children[lbImgIdx]) dots.children[lbImgIdx].classList.remove("on");
+  lbImgIdx = ((n % imgs.length) + imgs.length) % imgs.length;
+  imgs[lbImgIdx].classList.add("on");
+  if (dots && dots.children[lbImgIdx]) dots.children[lbImgIdx].classList.add("on");
+}
+/* 複数画像の公演でスワイプされたら画像を切り替える（公演は切り替えない）。
+   手動で切り替えたら自動切り替えは止め、読みたい画像で止まれるようにする。
+   画像が1枚の公演では false を返し、呼び出し側で公演移動に回す */
+function stepLbImage(d){
+  var ev = viewList[lbIdx];
+  if (!ev || !ev.imgs || ev.imgs.length < 2) return false;
+  stopLbCycle();
+  lbShowImage(lbImgIdx + d);
+  return true;
+}
 function startLbCycle(ev){
   stopLbCycle();
   if (reduceMotion || !ev.imgs || ev.imgs.length < 2) return;
   var stack = document.getElementById("lbStack");
   if (!stack) return;
-  var imgs = stack.querySelectorAll("img");
-  var dots = document.getElementById("lbDots");
-  var idx = 0;
   lbTimer = setInterval(function(){
     if (document.hidden) return;
     if (zm && zm.s > 1) return;
-    imgs[idx].classList.remove("on");
-    if (dots) dots.children[idx].classList.remove("on");
-    idx = (idx + 1) % imgs.length;
-    imgs[idx].classList.add("on");
-    if (dots) dots.children[idx].classList.add("on");
+    lbShowImage(lbImgIdx + 1);
   }, 2600);
 }
 function stopLbCycle(){

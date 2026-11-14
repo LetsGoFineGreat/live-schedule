@@ -6,9 +6,6 @@
 <meta name="color-scheme" content="light" />
 <link rel="icon" href="data:," />
 <title>Fine,Great LIVE SCHEDULE</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet" />
 <style>
   :root{
     --bg:#ffffff;
@@ -49,32 +46,28 @@
   .head-meta{margin:16px 0 0;display:flex;flex-wrap:wrap;gap:8px 26px;font-size:13px;color:var(--ink3);letter-spacing:.04em;}
   .head-meta b{color:var(--ink);font-weight:700;margin-left:6px;}
 
-  /* ---------- news ticker（電光掲示板風） ---------- */
-  .ticker{
-    margin:0 -20px;background:#000;color:#ffb000;
-    overflow:hidden;
-    background-image:radial-gradient(rgba(255,255,255,.055) 1px, transparent 1.4px);
-    background-size:7px 7px;
+  /* ---------- flyer marquee ---------- */
+  .marquee{
+    margin:0 -20px;background:var(--bg);
+    border-bottom:1px solid var(--line);
+    overflow:hidden;padding:14px 0;
   }
-  .ticker-track{
+  .marquee-track{
     display:inline-flex;white-space:nowrap;will-change:transform;
-    padding:11px 0;font-size:16px;font-weight:400;letter-spacing:.1em;line-height:1.5;
-    font-family:"DotGothic16","Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;
-    text-shadow:0 0 5px rgba(255,176,0,.9),0 0 14px rgba(255,140,0,.55),0 0 30px rgba(255,110,0,.35);
-    animation:ticker-move 45s linear infinite;
+    animation:marquee-move 40s linear infinite;
   }
-  .ticker:hover .ticker-track{animation-play-state:paused;}
-  .ticker-item{padding:0 34px;}
-  .ticker-item .tk-label{
-    background:#ffb000;color:#000;
-    padding:1px 8px;margin-right:14px;
-    font-size:12px;letter-spacing:.14em;
-    text-shadow:none;
-    box-shadow:0 0 10px rgba(255,176,0,.65);
+  .marquee:hover .marquee-track{animation-play-state:paused;}
+  .mq-item{
+    flex:none;height:104px;padding:0;margin-right:14px;
+    border:1px solid var(--line);background:#fff;line-height:0;cursor:pointer;
   }
-  @keyframes ticker-move{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+  .mq-item img{height:100%;width:auto;display:block;}
+  @keyframes marquee-move{from{transform:translateX(0);}to{transform:translateX(-50%);}}
   @media (prefers-reduced-motion: reduce){
-    .ticker-track{animation:none;}
+    .marquee-track{animation:none;}
+  }
+  @media (max-width:640px){
+    .mq-item{height:84px;}
   }
 
   /* ---------- tabs ---------- */
@@ -457,7 +450,7 @@
     </div>
   </header>
 
-  <div class="ticker" id="ticker" hidden aria-label="最新情報"><div class="ticker-track" id="tickerTrack"></div></div>
+  <div class="marquee" id="marquee" hidden aria-label="これからのライブのフライヤー"><div class="marquee-track" id="marqueeTrack"></div></div>
 
   <div class="tabs" role="tablist" aria-label="ライブの切り替え">
     <div class="tab-row">
@@ -887,23 +880,39 @@ document.getElementById("cnt-past").textContent = past.length;
 var yearsAll = EVENTS.map(function(e){return parseD(e.d).getFullYear();});
 document.getElementById("rangeLabel").textContent = Math.min.apply(null, yearsAll) + " — " + Math.max.apply(null, yearsAll);
 
-/* ニュースティッカー：これからの公演（日付順）から自動生成する */
+/* フライヤーマーキ：これからの公演のフライヤーを流し、タップでその公演の詳細を開く */
 (function(){
-  var box = document.getElementById("ticker");
-  var track = document.getElementById("tickerTrack");
-  if (!box || !track || !upcoming.length) return;
+  var box = document.getElementById("marquee");
+  var track = document.getElementById("marqueeTrack");
+  if (!box || !track) return;
   var sorted = upcoming.slice().sort(function(a, b){ return parseD(a.d) - parseD(b.d); });
-  var items = sorted.map(function(ev, i){
-    var s = fmtDate(ev) + " " + ev.t + " @" + ev.v;
-    var pf = playFormatted(ev);
-    if (pf) s += " — Fine,Great出演 " + pf + (ev.stage ? "（" + ev.stage + "）" : "");
-    if (ev.link) s += " ／ チケット発売中";
-    return '<span class="ticker-item"><span class="tk-label">' + (i === 0 ? "NEXT LIVE" : "LIVE") + "</span>" + escText(s) + "</span>";
-  });
-  var half = items.join("");
-  track.innerHTML = half + half;
-  var chars = track.textContent.length / 2;
-  track.style.animationDuration = Math.max(20, Math.round(chars * 0.32)) + "s";
+  var withImg = sorted.filter(function(ev){ return ev.img || (ev.imgs && ev.imgs.length); });
+  if (!withImg.length) return;
+  function makeItem(ev){
+    var b = document.createElement("button");
+    b.className = "mq-item";
+    b.type = "button";
+    b.setAttribute("aria-label", ev.t + " の詳細を開く");
+    var im = document.createElement("img");
+    im.src = ev.img ? ev.img : ev.imgs[0];
+    im.alt = "";
+    b.appendChild(im);
+    b.addEventListener("click", function(){
+      state.tab = "upcoming"; state.year = "all"; state.sort = "asc";
+      render();
+      var idx = viewList.indexOf(ev);
+      if (idx >= 0) openLB(idx);
+    });
+    return b;
+  }
+  withImg.forEach(function(ev){ track.appendChild(makeItem(ev)); });
+  withImg.forEach(function(ev){ track.appendChild(makeItem(ev)); });
+  function setDur(){
+    var w = track.scrollWidth / 2;
+    if (w > 0) track.style.animationDuration = Math.max(18, Math.round(w / 55)) + "s";
+  }
+  window.addEventListener("load", setDur);
+  setDur();
   box.hidden = false;
 })();
 

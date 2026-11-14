@@ -206,8 +206,7 @@
     font-size:10.5px;font-weight:700;letter-spacing:.14em;
     background:var(--ink);color:#fff;padding:2px 6px;margin:-1px 0;
   }
-  /* 出演時間は日付と同じ行（横）に配置する */
-  .cdate .cplay{margin:0 0 0 10px;vertical-align:middle;}
+
   /* OPEN/START・チケット料金はカードには表示せず、詳細画面でのみ表示する */
   .cacts{
     font-size:12.5px;color:var(--ink3);line-height:1.55;
@@ -429,7 +428,6 @@
     .ctitle{font-size:14px;}
     .cbody{padding:10px 12px 12px;}
     .cdate{white-space:normal;overflow:visible;text-overflow:clip;display:flex;flex-direction:column;align-items:flex-start;gap:5px;line-height:1.35;}
-    .cdate .cplay{margin:0;}
     .cdate .count{margin-left:0;vertical-align:baseline;white-space:nowrap;}
     .cacts{margin-bottom:10px;}
     .cnote{font-size:10.5px;letter-spacing:0;padding:8px 6px;}
@@ -1001,8 +999,9 @@ function render(){
       : '<div class="face">' + placeholderHTML(ev) + '</div>';
     card.innerHTML = face +
       '<div class="cbody">' +
-        '<div class="cdate">' + fmtDate(ev) + countChip(ev) + playChipHTML(ev) + '</div>' +
+        '<div class="cdate">' + fmtDate(ev) + countChip(ev) + '</div>' +
         '<h3 class="ctitle"></h3>' +
+        playChipHTML(ev) +
         '<div class="cvenue"></div>' +
         '<div class="cacts"></div>' +
         noteCardHTML(ev) +

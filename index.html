@@ -105,6 +105,10 @@
     display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
   }
   .sortbtn:hover{border-color:var(--ink);}
+  .lang-row{display:flex;justify-content:flex-end;margin:2px 0 10px;}
+  .lang-toggle{display:inline-flex;border:1px solid var(--ink);border-radius:999px;overflow:hidden;}
+  .lang-toggle button{padding:6px 16px;font-size:13px;font-weight:700;letter-spacing:.06em;background:#fff;color:var(--ink);border:0;cursor:pointer;}
+  .lang-toggle button[aria-pressed="true"]{background:var(--ink);color:#fff;}
   .shown{width:100%;color:var(--ink3);font-size:12.5px;margin-top:8px;letter-spacing:.03em;}
 
   /* ---------- grid / cards ---------- */
@@ -445,17 +449,21 @@
       <div class="hero-text">
         <h1 class="hero-title"><span class="brand">Fine,Great</span><span class="schedule">LIVE SCHEDULE</span></h1>
         <p class="tagline">Japanese progressive power-pop band — Tokyo, Japan</p>
-        <p class="head-meta"><span>ライブスケジュール<b id="totalCount"></b></span><span>期間<b id="rangeLabel"></b></span></p>
+        <p class="head-meta"><span><span id="totalLabel">ライブスケジュール</span><b id="totalCount"></b></span><span><span id="rangeTitle">期間</span><b id="rangeLabel"></b></span></p>
       </div>
     </div>
   </header>
+
+  <div class="lang-row"><div class="lang-toggle" role="group" aria-label="Language">
+    <button type="button" id="langJa" aria-pressed="true">日本語</button><button type="button" id="langEn" aria-pressed="false">EN</button>
+  </div></div>
 
   <div class="marquee" id="marquee" hidden aria-label="これからのライブのフライヤー"><div class="marquee-track" id="marqueeTrack"></div></div>
 
   <div class="tabs" role="tablist" aria-label="ライブの切り替え">
     <div class="tab-row">
-      <button class="tab" id="tab-upcoming" role="tab" data-tab="upcoming">これからのライブ <span class="cnt" id="cnt-upcoming"></span></button>
-      <button class="tab" id="tab-past" role="tab" data-tab="past">過去のライブ <span class="cnt" id="cnt-past"></span></button>
+      <button class="tab" id="tab-upcoming" role="tab" data-tab="upcoming"><span id="tabUpcomingLabel">これからのライブ</span> <span class="cnt" id="cnt-upcoming"></span></button>
+      <button class="tab" id="tab-past" role="tab" data-tab="past"><span id="tabPastLabel">過去のライブ</span> <span class="cnt" id="cnt-past"></span></button>
     </div>
   </div>
 
@@ -470,7 +478,7 @@
   <footer>
     <span class="fbrand">Fine,Great</span> — Tokyo, Japan
     <div class="contact">
-      <p>ご質問・ご不明点ある方は、こちらのメールアドレスからお問い合わせください。</p>
+      <p id="contactText">ご質問・ご不明点ある方は、こちらのメールアドレスからお問い合わせください。</p>
       <a href="mailto:finegreat01@gmail.com">finegreat01@gmail.com</a>
     </div>
   </footer>
@@ -615,10 +623,65 @@ var EVENTS = [
 ];
 
 var WD = ["日","月","火","水","木","金","土"];
+var WD_EN = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+var WD_EN_FULL = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var MON_EN = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+var LANG = "ja";
+try {
+  var savedLang = localStorage.getItem("fg-lang");
+  if (savedLang === "en" || savedLang === "ja") LANG = savedLang;
+  else if (navigator.language && navigator.language.toLowerCase().indexOf("ja") !== 0) LANG = "en";
+} catch(e) {}
+var I18N = {
+  ja: { upcoming:"これからのライブ", past:"過去のライブ", totalLabel:"ライブスケジュール", rangeTitle:"期間",
+    allYears:"すべての年", sortDesc:"並び順：新しい順", sortAsc:"並び順：古い順", empty:"この条件の公演はありません。",
+    ongoing:"開催中", tomorrow:"あと1日（明日）", setLabel:"出演", setTime:"出演時間", cal:"カレンダーに追加",
+    prev:"← 前の公演", next:"次の公演 →", zoomHint:"ピンチ／ダブルタップで拡大できます", zoomReset:"元の大きさに戻す",
+    contact:"ご質問・ご不明点ある方は、こちらのメールアドレスからお問い合わせください。" },
+  en: { upcoming:"Upcoming Shows", past:"Past Shows", totalLabel:"Total shows", rangeTitle:"Period",
+    allYears:"All years", sortDesc:"Sort: Newest first", sortAsc:"Sort: Oldest first", empty:"No shows match these filters.",
+    ongoing:"ON NOW", tomorrow:"Tomorrow", setLabel:"SET", setTime:"Set time", cal:"Add to Calendar",
+    prev:"← Prev", next:"Next →", zoomHint:"Pinch or double-tap to zoom", zoomReset:"Reset zoom",
+    contact:"Questions? Please contact us by email." }
+};
+function T(k){ return I18N[LANG][k]; }
+function fmtDateEN(dt){ return WD_EN[dt.getDay()] + ", " + MON_EN[dt.getMonth()] + " " + dt.getDate() + ", " + dt.getFullYear(); }
+var VENUE_EN = [
+  ["下北沢複数会場","Multiple venues in Shimokitazawa, Tokyo"],
+  ["下北沢","Shimokitazawa "]
+];
+function vText(ev){
+  if (LANG === "ja") return ev.v;
+  var v = ev.v;
+  for (var i = 0; i < VENUE_EN.length; i++) v = v.split(VENUE_EN[i][0]).join(VENUE_EN[i][1]);
+  return v.replace(/\s+$/, "");
+}
+function aText(ev){
+  if (LANG === "ja") return ev.a;
+  return ev.a.split("Fine,Great（単独）").join("Fine,Great (solo show)");
+}
+var FEE_LABEL_EN = {"一般":"General","U18チケット":"U-18 Ticket","シモニテエール":"Shimonite Cheer"};
+function feeLabelEN(k){ return FEE_LABEL_EN[k] || k; }
+function feeTextEN(f){
+  return f.split("別途1D").join("+1 drink not included")
+          .split("2D込").join("incl. 2 drinks")
+          .split("+1Drink").join("+1 Drink")
+          .split("+1D").join("+1 Drink");
+}
+var NOTE_EN = {"各Fine,Greatライブにて\n手売りチケットも販売中！":"Hand-sold tickets also available\nat every Fine,Great show!"};
+function noteDisplay(ev){
+  var t = noteText(ev);
+  if (LANG === "en" && NOTE_EN[t]) return NOTE_EN[t];
+  return t;
+}
 function parseD(s){ var p=s.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
 function fmtDate(ev){
-  if (ev.disp) return ev.disp;
+  if (ev.disp){
+    if (LANG === "en" && ev.e) return fmtDateEN(parseD(ev.d)) + " – " + fmtDateEN(parseD(ev.e));
+    return ev.disp;
+  }
   var dt = parseD(ev.d);
+  if (LANG === "en") return fmtDateEN(dt);
   return dt.getFullYear() + "." + (dt.getMonth()+1) + "." + dt.getDate() + "（" + WD[dt.getDay()] + "）";
 }
 function endOf(ev){ return ev.e ? parseD(ev.e) : parseD(ev.d); }
@@ -629,10 +692,10 @@ function daysUntil(ev){
 function countLabel(ev){
   if (!ev.upcoming) return "";
   var n = daysUntil(ev);
-  if (n < 0) return "開催中";
+  if (n < 0) return T("ongoing");
   if (n === 0) return "TODAY";
-  if (n === 1) return "あと1日（明日）";
-  return "あと" + n + "日";
+  if (n === 1) return T("tomorrow");
+  return LANG === "en" ? "in " + n + " days" : "あと" + n + "日";
 }
 function countChip(ev){
   var cl = countLabel(ev);
@@ -658,14 +721,14 @@ function playChipHTML(ev){
   if (!ev.upcoming) return "";
   var f = playFormatted(ev);
   if (!f) return "";
-  return '<span class="cplay"><span class="cplay-label">出演</span>' + f + '</span>';
+  return '<span class="cplay"><span class="cplay-label">' + T("setLabel") + '</span>' + f + '</span>';
 }
 function playDetailHTML(ev){
   if (!ev.upcoming) return "";
   var f = playFormatted(ev);
   if (!f) return "";
-  var note = "Fine,Great 出演" + (ev.stage ? "（" + ev.stage + "）" : "");
-  return '<div class="lb-play"><span class="lb-play-label">出演時間</span><span class="lb-play-time">' + f + '</span><span class="lb-play-note">' + note + '</span></div>';
+  var note = LANG === "en" ? "Fine,Great" + (ev.stage ? " (" + ev.stage + ")" : "") : "Fine,Great 出演" + (ev.stage ? "（" + ev.stage + "）" : "");
+  return '<div class="lb-play"><span class="lb-play-label">' + T("setTime") + '</span><span class="lb-play-time">' + f + '</span><span class="lb-play-note">' + note + '</span></div>';
 }
 /* OPEN / START・チケット料金：公演データに open / start / adv / door / price がある場合のみ表示する
    使い方（今後データ追加時）:
@@ -801,9 +864,11 @@ function metaDetailHTML(ev){
   if (!rows.length) return "";
   return rows.map(function(r){
     if (r.div) return '<div class="ldiv"></div>';
-    return '<span class="lk">' + escText(r.k) + '</span>' +
+    var k = LANG === "en" ? feeLabelEN(r.k) : r.k;
+    var fee = r.fee ? (LANG === "en" ? feeTextEN(r.fee) : r.fee) : "";
+    return '<span class="lk">' + escText(k) + '</span>' +
       '<span class="lv">' + escText(r.v) +
-      (r.fee ? '<span class="lfee">' + escText(r.fee) + '</span>' : '') + '</span>';
+      (fee ? '<span class="lfee">' + escText(fee) + '</span>' : '') + '</span>';
   }).join("");
 }
 /* 公演ごとの注記：公演データに note フィールドがある場合のみ表示する
@@ -814,16 +879,16 @@ function metaDetailHTML(ev){
    「各Fine,Greatライブにて／手売りチケットも販売中！」の2行 */
 function noteText(ev){ return ev.note ? String(ev.note).trim() : ""; }
 function noteLinesHTML(ev){
-  return noteText(ev).split("\n").map(function(line){
+  return noteDisplay(ev).split("\n").map(function(line){
     return '<span class="note-line">' + escText(line) + '</span>';
   }).join("");
 }
 function noteCardHTML(ev){
-  if (!noteText(ev)) return "";
+  if (!noteDisplay(ev)) return "";
   return '<div class="cnote">' + noteLinesHTML(ev) + '</div>';
 }
 function noteDetailHTML(ev){
-  if (!noteText(ev)) return "";
+  if (!noteDisplay(ev)) return "";
   return '<div class="lb-note">' + noteLinesHTML(ev) + '</div>';
 }
 /* DJ：公演データに dj フィールドがある場合のみ、詳細画面に出演者（バンド）とは別枠で表示する
@@ -874,7 +939,7 @@ EVENTS.forEach(function(ev){ ev.upcoming = endOf(ev) >= today; });
 var upcoming = EVENTS.filter(function(e){return e.upcoming;});
 var past = EVENTS.filter(function(e){return !e.upcoming;});
 
-document.getElementById("totalCount").textContent = "全" + EVENTS.length + "件";
+document.getElementById("totalCount").textContent = LANG === "en" ? String(EVENTS.length) : "全" + EVENTS.length + "件";
 document.getElementById("cnt-upcoming").textContent = upcoming.length;
 document.getElementById("cnt-past").textContent = past.length;
 var yearsAll = EVENTS.map(function(e){return parseD(e.d).getFullYear();});
@@ -938,12 +1003,12 @@ function placeholderHTML(ev){
     sub = "";
   } else {
     md = (dt.getMonth()+1) + "." + dt.getDate();
-    sub = WD[dt.getDay()] + "曜日";
+    sub = LANG === "en" ? WD_EN_FULL[dt.getDay()] : WD[dt.getDay()] + "曜日";
   }
   return '<div class="ph"><div class="y">' + dt.getFullYear() + '</div>' +
     '<div class="md">' + md + '</div>' +
     (sub ? '<div class="wd">' + sub + '</div>' : '') +
-    '<div class="vv">' + ev.v + '</div></div>';
+    '<div class="vv">' + vText(ev) + '</div></div>';
 }
 
 function currentList(){
@@ -972,7 +1037,7 @@ function render(){
   if (state.year !== "all" && !ys[state.year]) state.year = "all";
   yearsEl.innerHTML = "";
   var allChip = document.createElement("button");
-  allChip.className = "ychip"; allChip.textContent = "すべての年";
+  allChip.className = "ychip"; allChip.textContent = T("allYears");
   allChip.setAttribute("aria-pressed", state.year === "all" ? "true" : "false");
   allChip.addEventListener("click", function(){ state.year = "all"; render(); });
   yearsEl.appendChild(allChip);
@@ -985,14 +1050,16 @@ function render(){
   });
   // sort button
   sortBtn.innerHTML = state.sort === "desc"
-    ? '並び順：新しい順 <span class="arr">↓</span>'
-    : '並び順：古い順 <span class="arr">↑</span>';
+    ? T("sortDesc") + ' <span class="arr">↓</span>'
+    : T("sortAsc") + ' <span class="arr">↑</span>';
 
   viewList = currentList();
-  shownEl.textContent = (state.tab === "upcoming" ? "これからのライブ" : "過去のライブ") + " " + viewList.length + "件を表示中";
+  shownEl.textContent = LANG === "en"
+    ? "Showing " + viewList.length + (state.tab === "upcoming" ? " upcoming shows" : " past shows")
+    : (state.tab === "upcoming" ? "これからのライブ" : "過去のライブ") + " " + viewList.length + "件を表示中";
 
   if (!viewList.length){
-    listEl.innerHTML = '<div class="empty">この条件の公演はありません。</div>';
+    listEl.innerHTML = '<div class="empty">' + T("empty") + '</div>';
     return;
   }
   var grid = document.createElement("div");
@@ -1017,8 +1084,8 @@ function render(){
         (ev.upcoming && ev.link ? '<a class="creserve" href="' + ev.link + '" target="_blank" rel="noopener">' + "TICKET →</a>" : '') +
       '</div>';
     card.querySelector(".ctitle").textContent = ev.t;
-    card.querySelector(".cvenue").textContent = ev.v;
-    card.querySelector(".cacts").textContent = ev.a;
+    card.querySelector(".cvenue").textContent = vText(ev);
+    card.querySelector(".cacts").textContent = aText(ev);
     if (ev.n) card.querySelector(".cacts").classList.add("clamp");
     card.querySelector(".face").addEventListener("click", function(){ openLB(i); });
     card.querySelector(".cbody").addEventListener("click", function(e){
@@ -1045,6 +1112,32 @@ sortBtn.addEventListener("click", function(){
   render();
 });
 
+/* ---------- 言語切り替え JA / EN ---------- */
+function applyLang(){
+  document.documentElement.lang = LANG === "en" ? "en" : "ja";
+  document.getElementById("langJa").setAttribute("aria-pressed", LANG === "ja" ? "true" : "false");
+  document.getElementById("langEn").setAttribute("aria-pressed", LANG === "en" ? "true" : "false");
+  document.getElementById("tabUpcomingLabel").textContent = T("upcoming");
+  document.getElementById("tabPastLabel").textContent = T("past");
+  document.getElementById("totalLabel").textContent = T("totalLabel");
+  document.getElementById("rangeTitle").textContent = T("rangeTitle");
+  document.getElementById("totalCount").textContent = LANG === "en" ? String(EVENTS.length) : "全" + EVENTS.length + "件";
+  document.getElementById("contactText").textContent = T("contact");
+  document.getElementById("lbPrev").textContent = T("prev");
+  document.getElementById("lbNext").textContent = T("next");
+  render();
+  if (document.getElementById("lb").classList.contains("open")) renderLB();
+}
+function setLang(l){
+  if (l !== "en" && l !== "ja") return;
+  LANG = l;
+  try { localStorage.setItem("fg-lang", l); } catch(e) {}
+  applyLang();
+}
+document.getElementById("langJa").addEventListener("click", function(){ setLang("ja"); });
+document.getElementById("langEn").addEventListener("click", function(){ setLang("en"); });
+applyLang();
+
 /* ---------- lightbox ---------- */
 var lb = document.getElementById("lb");
 var lbFig = document.getElementById("lbFig");
@@ -1057,7 +1150,7 @@ function renderLB(){
   lbFig.innerHTML = ev.img
     ? '<div class="lb-zoom" id="lbZoom">' + (ev.imgs && ev.imgs.length > 1
         ? '<div class="stack" id="lbStack">' + ev.imgs.map(function(s, k){ return '<img class="' + (k === 0 ? "on" : "") + '" src="' + s + '" alt="' + ev.t.replace(/"/g,"") + ' のフライヤー" draggable="false">'; }).join("") + '</div>'
-        : '<img src="' + ev.img + '" alt="' + ev.t.replace(/"/g,"") + ' のフライヤー" draggable="false">') + '<button class="lb-zoom-reset" id="lbZoomReset" type="button">元の大きさに戻す</button></div>' + (ev.imgs && ev.imgs.length > 1 ? '<div class="lb-dots" id="lbDots">' + ev.imgs.map(function(_, k){ return '<i class="' + (k === 0 ? "on" : "") + '"></i>'; }).join("") + '</div>' : '') + '<p class="lb-zoom-hint">ピンチ／ダブルタップで拡大できます</p>'
+        : '<img src="' + ev.img + '" alt="' + ev.t.replace(/"/g,"") + ' のフライヤー" draggable="false">') + '<button class="lb-zoom-reset" id="lbZoomReset" type="button">' + T("zoomReset") + '</button></div>' + (ev.imgs && ev.imgs.length > 1 ? '<div class="lb-dots" id="lbDots">' + ev.imgs.map(function(_, k){ return '<i class="' + (k === 0 ? "on" : "") + '"></i>'; }).join("") + '</div>' : '') + '<p class="lb-zoom-hint">' + T("zoomHint") + '</p>'
     : placeholderHTML(ev);
   lbImgIdx = 0;
   startLbCycle(ev);
@@ -1075,9 +1168,9 @@ function renderLB(){
   vlink.href = mapURL(ev);
   vlink.target = "_blank";
   vlink.rel = "noopener";
-  vlink.textContent = ev.v + " ↗";
+  vlink.textContent = vText(ev) + " ↗";
   lbVenue.appendChild(vlink);
-  document.getElementById("lbActs").textContent = ev.n ? ("全" + ev.n + "組：" + ev.a) : ev.a;
+  document.getElementById("lbActs").textContent = ev.n ? (LANG === "en" ? ev.n + " acts: " + aText(ev) : "全" + ev.n + "組：" + ev.a) : aText(ev);
   var lbDJEl = document.getElementById("lbDJ");
   lbDJEl.innerHTML = djDetailHTML(ev);
   var lbDJText = lbDJEl.querySelector(".lb-dj-text");
@@ -1090,7 +1183,7 @@ function renderLB(){
     ? '<a class="reserve" href="' + ev.link + '" target="_blank" rel="noopener">' + "TICKET →</a>"
     : "";
   document.getElementById("lbCal").innerHTML = ev.upcoming
-    ? '<a class="calbtn" href="' + calURL(ev) + '" target="_blank" rel="noopener">カレンダーに追加</a>'
+    ? '<a class="calbtn" href="' + calURL(ev) + '" target="_blank" rel="noopener">' + T("cal") + '</a>'
     : "";
   var label = (lbIdx+1) + " / " + viewList.length;
   document.getElementById("lbCount").textContent = label;

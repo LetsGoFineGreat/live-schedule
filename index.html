@@ -212,13 +212,29 @@
     margin-bottom:12px;
   }
   .creserve{
-    margin-top:auto;
-    display:flex;align-items:center;justify-content:center;
-    width:100%;padding:11px 16px;
-    background:var(--ink);color:#fff;
+    margin-top:auto;position:relative;
+    display:flex;align-items:stretch;
+    width:100%;padding:0;
+    background:var(--ink);color:#fff;border-radius:7px;
     font-size:13.5px;font-weight:700;letter-spacing:.14em;text-decoration:none;
+    transition:transform .06s ease;
   }
   .creserve:hover{background:#333333;}
+  .creserve:active{transform:translateY(2px);}
+  /* チケット型ボタン：両端の切り込み（半円ノッチ）＋ミシン目＋スタブ */
+  .creserve::before,.creserve::after,.reserve::before,.reserve::after{
+    content:"";position:absolute;top:50%;width:16px;height:16px;border-radius:50%;
+    background:#fff;transform:translateY(-50%);z-index:1;pointer-events:none;
+  }
+  .creserve::before,.reserve::before{left:-8px;}
+  .creserve::after,.reserve::after{right:-8px;}
+  .tlab{flex:1;display:flex;align-items:center;justify-content:center;}
+  .creserve .tlab{padding:11px 0 11px 14px;}
+  .tstub{
+    flex:none;display:flex;align-items:center;justify-content:center;
+    border-left:2px dashed rgba(255,255,255,.45);font-weight:400;letter-spacing:0;
+  }
+  .creserve .tstub{width:40px;}
   /* 公演ごとの注記（データに note がある場合のみ表示）：ラベルなし、出演時間の実線枠と区別できる破線枠ボックス */
   .cnote{
     color:var(--ink);
@@ -335,12 +351,16 @@
   }
   .lb-acts-text{color:var(--ink2);}
   .reserve{
-    display:inline-flex;align-items:center;gap:8px;
-    padding:13px 32px;
-    background:var(--ink);color:#fff;
+    display:inline-flex;align-items:stretch;position:relative;
+    padding:0;
+    background:var(--ink);color:#fff;border-radius:7px;
     font-size:14px;font-weight:700;letter-spacing:.14em;text-decoration:none;
+    transition:transform .06s ease;
   }
   .reserve:hover{background:#333333;}
+  .reserve:active{transform:translateY(2px);}
+  .reserve .tlab{padding:13px 2px 13px 30px;}
+  .reserve .tstub{width:44px;}
   .lb-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px;align-items:stretch;}
   .lb-actions #lbReserve{display:flex;flex-wrap:wrap;gap:10px;}
   /* 詳細：ページ内取り置き予約フォーム（送信先はGoogleフォーム） */
@@ -451,7 +471,9 @@
     .lb-meta{grid-template-columns:78px 1fr;column-gap:10px;}
     .lb-meta .lv{font-size:14px;white-space:nowrap;}
     .lb-meta .lv .lfee{font-size:11.5px;margin-left:1px;}
-    .creserve{padding:9px 8px;font-size:12.5px;}
+    .creserve{font-size:12.5px;}
+    .creserve .tlab{padding-top:9px;padding-bottom:9px;}
+    .creserve .tstub{width:36px;}
     .face{padding:6px;}
     .tab{font-size:14.5px;}
     header{padding:30px 0 24px;}
@@ -1137,7 +1159,7 @@ function render(){
         '<div class="cvenue"></div>' +
         '<div class="cacts"></div>' +
         noteCardHTML(ev) +
-        (ev.upcoming && ev.link ? (isFormEvent(ev) ? '<button type="button" class="creserve" data-rsv="1">' + "TICKET →</button>" : (ev.links && ev.links.length > 1 ? '<button type="button" class="creserve" data-links="1">' + "TICKET →</button>" : '<a class="creserve" href="' + ev.link + '" target="_blank" rel="noopener">' + "TICKET →</a>")) : '') +
+        (ev.upcoming && ev.link ? (isFormEvent(ev) ? '<button type="button" class="creserve" data-rsv="1">' + "<span class='tlab'>TICKET</span><span class='tstub'>→</span></button>" : (ev.links && ev.links.length > 1 ? '<button type="button" class="creserve" data-links="1">' + "<span class='tlab'>TICKET</span><span class='tstub'>→</span></button>" : '<a class="creserve" href="' + ev.link + '" target="_blank" rel="noopener">' + "<span class='tlab'>TICKET</span><span class='tstub'>→</span></a>")) : '') +
       '</div>';
     card.querySelector(".ctitle").textContent = ev.t;
     card.querySelector(".cvenue").textContent = vText(ev);
@@ -1303,15 +1325,15 @@ function renderLB(){
   if (lbFoodText) lbFoodText.textContent = foodText(ev);
   var lbRsvEl = document.getElementById("lbReserve");
   if (isFormEvent(ev)){
-    lbRsvEl.innerHTML = '<button type="button" class="reserve" id="lbFormToggle">' + "TICKET →</button>";
+    lbRsvEl.innerHTML = '<button type="button" class="reserve" id="lbFormToggle">' + "<span class='tlab'>TICKET</span><span class='tstub'>→</span></button>";
     document.getElementById("lbFormToggle").addEventListener("click", function(){ expandRsvForm(); });
   } else if (ev.upcoming && ev.links && ev.links.length > 1){
     lbRsvEl.innerHTML = ev.links.map(function(L){
-      return '<a class="reserve" href="' + L[1] + '" target="_blank" rel="noopener">' + "TICKET（" + L[0] + "）→</a>";
+      return '<a class="reserve" href="' + L[1] + '" target="_blank" rel="noopener">' + "<span class='tlab'>TICKET（" + L[0] + "）</span><span class='tstub'>→</span></a>";
     }).join("");
   } else {
     lbRsvEl.innerHTML = (ev.upcoming && ev.link)
-      ? '<a class="reserve" href="' + ev.link + '" target="_blank" rel="noopener">' + "TICKET →</a>"
+      ? '<a class="reserve" href="' + ev.link + '" target="_blank" rel="noopener">' + "<span class='tlab'>TICKET</span><span class='tstub'>→</span></a>"
       : "";
   }
   fillRsvForm(ev);

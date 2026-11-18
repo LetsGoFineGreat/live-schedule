@@ -407,8 +407,8 @@
   .rf-submit:disabled{background:var(--ink3);cursor:default;}
   .rf-note{margin:12px 0 0;font-size:12px;line-height:1.6;color:var(--ink2);}
   .rf-done{border:1.5px solid var(--ink);padding:20px 18px;background:var(--face);}
-  .rf-thanks{font-size:31px;font-weight:800;letter-spacing:.03em;line-height:1.15;margin:0 0 10px;animation:thanksPop .45s cubic-bezier(.2,1.6,.4,1) both;}
-  @keyframes thanksPop{0%{transform:scale(.5) rotate(-4deg);opacity:0;}100%{transform:scale(1) rotate(-1.2deg);opacity:1;}}
+  .rf-thanks{font-size:31px;font-weight:800;letter-spacing:.03em;line-height:1.15;margin:0 0 10px;animation:thanksPop .55s ease-out both;}
+  @keyframes thanksPop{0%{transform:scale(.25);opacity:0;}55%{transform:scale(1.22);opacity:1;}75%{transform:scale(.95);}100%{transform:scale(1);}}
   @media (prefers-reduced-motion: reduce){ .rf-thanks{animation:none;} }
   .rf-done-title{font-size:15px;font-weight:700;letter-spacing:.06em;}
   .rf-done-text{margin:8px 0 0;font-size:13.5px;line-height:1.7;color:var(--ink2);}

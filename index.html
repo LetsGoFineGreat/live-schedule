@@ -215,26 +215,34 @@
     margin-top:auto;position:relative;
     display:flex;align-items:stretch;
     width:100%;padding:0;
-    background:var(--ink);color:#fff;border-radius:7px;
+    background:transparent;color:#fff;
     font-size:13.5px;font-weight:700;letter-spacing:.14em;text-decoration:none;
     transition:transform .06s ease;
   }
-  .creserve:hover{background:#333333;}
   .creserve:active{transform:translateY(2px);}
-  /* チケット型ボタン：両端の切り込み（半円ノッチ）＋ミシン目＋スタブ */
-  .creserve::before,.creserve::after,.reserve::before,.reserve::after{
-    content:"";position:absolute;top:50%;width:16px;height:16px;border-radius:50%;
-    background:#fff;transform:translateY(-50%);z-index:1;pointer-events:none;
+  /* チケット型ボタン：左ピース（ラベル）＋右ピース（スタブ）で構成し、スタブが丸ごとちぎれる */
+  .creserve::before,.reserve::before{
+    content:"";position:absolute;top:50%;left:-8px;width:16px;height:16px;border-radius:50%;
+    background:#fff;transform:translateY(-50%);z-index:2;pointer-events:none;
   }
-  .creserve::before,.reserve::before{left:-8px;}
-  .creserve::after,.reserve::after{right:-8px;}
-  .tlab{flex:1;display:flex;align-items:center;justify-content:center;}
+  .tlab{
+    flex:1;display:flex;align-items:center;justify-content:center;
+    background:var(--ink);border-radius:7px 0 0 7px;
+    border-right:2px dashed rgba(255,255,255,.45);
+  }
   .creserve .tlab{padding:11px 0 11px 14px;}
   .tstub{
-    flex:none;display:flex;align-items:center;justify-content:center;
-    border-left:2px dashed rgba(255,255,255,.45);font-weight:400;letter-spacing:0;
+    flex:none;position:relative;display:flex;align-items:center;justify-content:center;
+    background:var(--ink);border-radius:0 7px 7px 0;
+    font-weight:400;letter-spacing:0;
+  }
+  .tstub::after{
+    content:"";position:absolute;top:50%;right:-8px;width:16px;height:16px;border-radius:50%;
+    background:#fff;transform:translateY(-50%);z-index:2;pointer-events:none;
   }
   .creserve .tstub{width:40px;}
+  .creserve:hover .tlab,.creserve:hover .tstub,
+  .reserve:hover .tlab,.reserve:hover .tstub{background:#333333;}
   /* 公演ごとの注記（データに note がある場合のみ表示）：ラベルなし、出演時間の実線枠と区別できる破線枠ボックス */
   .cnote{
     color:var(--ink);
@@ -353,18 +361,17 @@
   .reserve{
     display:inline-flex;align-items:stretch;position:relative;
     padding:0;
-    background:var(--ink);color:#fff;border-radius:7px;
+    background:transparent;color:#fff;
     font-size:14px;font-weight:700;letter-spacing:.14em;text-decoration:none;
     transition:transform .06s ease;
   }
-  .reserve:hover{background:#333333;}
   .reserve:active{transform:translateY(2px);}
   .reserve .tlab{padding:13px 2px 13px 30px;}
   .reserve .tstub{width:44px;}
-  /* 切り取り演出：タップでスタブがミシン目からちぎれて落ちる */
-  .tstub{transform-origin:0 0;}
+  /* 切り取り演出：タップでスタブ（黒いピースごと）がミシン目からちぎれて落ちる */
+  .tstub{transform-origin:0 100%;}
   .creserve.torn,.reserve.torn{animation:tearJolt .22s ease;}
-  .creserve.torn .tstub,.reserve.torn .tstub{animation:tearOff .55s cubic-bezier(.3,.6,.6,1) forwards;}
+  .creserve.torn .tstub,.reserve.torn .tstub{animation:tearOff .65s cubic-bezier(.3,.6,.6,1) forwards;}
   @keyframes tearJolt{
     0%{transform:translate(0,0);}
     35%{transform:translate(-2px,1px);}
@@ -373,9 +380,10 @@
   }
   @keyframes tearOff{
     0%{transform:rotate(0deg) translate(0,0);opacity:1;}
-    25%{transform:rotate(5deg) translate(1px,3px);opacity:1;}
-    55%{transform:rotate(14deg) translate(3px,10px);opacity:1;}
-    100%{transform:rotate(30deg) translate(8px,30px);opacity:0;}
+    20%{transform:rotate(-4deg) translate(0,1px);opacity:1;}
+    38%{transform:rotate(3deg) translate(1px,2px);opacity:1;}
+    55%{transform:rotate(10deg) translate(3px,9px);opacity:1;}
+    100%{transform:rotate(24deg) translate(10px,46px);opacity:0;}
   }
   @media (prefers-reduced-motion: reduce){
     .creserve.torn,.reserve.torn{animation:none;}
@@ -1537,7 +1545,7 @@ document.addEventListener("click", function(e){
     e.stopPropagation();
     e.preventDefault();
     b.dataset.tear = "1";
-    setTimeout(function(){ delete b.dataset.tear; b.click(); }, 300);
+    setTimeout(function(){ delete b.dataset.tear; b.click(); }, 350);
   }
 }, true);
 lb.addEventListener("click", function(e){ if (e.target === lb) closeLB(); });

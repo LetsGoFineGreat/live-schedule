@@ -1534,18 +1534,29 @@ document.getElementById("lbClose").addEventListener("click", closeLB);
 document.getElementById("lbPrev").addEventListener("click", function(){ stepLB(-1); });
 document.getElementById("lbNext").addEventListener("click", function(){ stepLB(1); });
 
-/* チケット切り取り演出：ボタン型（詳細を開く等）は演出を見せてから本来の動作へ */
+/* チケット切り取り演出：演出が一瞬見えてから次の画面へ（ボタン型・リンク型とも約0.5秒遅らせて本来の動作へ） */
 document.addEventListener("click", function(e){
   var b = e.target.closest ? e.target.closest(".creserve,.reserve") : null;
   if (!b || b.classList.contains("torn")) return;
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   b.classList.add("torn");
   setTimeout(function(){ b.classList.remove("torn"); }, 1400);
-  if (b.tagName === "BUTTON" && !b.dataset.tear) {
+  if (b.dataset.tear) return;
+  if (b.tagName === "BUTTON") {
     e.stopPropagation();
     e.preventDefault();
     b.dataset.tear = "1";
-    setTimeout(function(){ delete b.dataset.tear; b.click(); }, 350);
+    setTimeout(function(){ delete b.dataset.tear; b.click(); }, 500);
+  } else if (b.tagName === "A" && b.href) {
+    e.stopPropagation();
+    e.preventDefault();
+    b.dataset.tear = "1";
+    var url = b.href;
+    setTimeout(function(){
+      delete b.dataset.tear;
+      var w = window.open(url, "_blank");
+      if (!w) location.href = url;
+    }, 500);
   }
 }, true);
 lb.addEventListener("click", function(e){ if (e.target === lb) closeLB(); });

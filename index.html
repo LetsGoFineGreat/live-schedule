@@ -243,6 +243,13 @@
   .creserve .tstub{width:40px;}
   .creserve:hover .tlab,.creserve:hover .tstub,
   .reserve:hover .tlab,.reserve:hover .tstub{background:#333333;}
+  /* SOLD OUT：チケット型のままグレーにして押せなくする */
+  .creserve.soldout,.reserve.soldout{cursor:default;}
+  .creserve.soldout .tlab,.creserve.soldout .tstub,
+  .reserve.soldout .tlab,.reserve.soldout .tstub,
+  .creserve.soldout:hover .tlab,.creserve.soldout:hover .tstub,
+  .reserve.soldout:hover .tlab,.reserve.soldout:hover .tstub{background:#9a9a9a;}
+  .creserve.soldout:active{transform:none;}
   /* 公演ごとの注記（データに note がある場合のみ表示）：ラベルなし、出演時間の実線枠と区別できる破線枠ボックス */
   .cnote{
     color:var(--ink);
@@ -630,7 +637,7 @@ var EVENTS = [
   {d:"2026-12-17", t:"pavilion『dismount』Release Tour × THREE 17TH ANNIVERSARY", v:"下北沢THREE", a:"pavilion", img:"assets/pavilion-dismount.jpg", open:"19:00", start:"19:30", adv:"¥3,000", door:"¥3,500", feeNote:"+1Drink", link:"https://livepocket.jp/e/n7i6y", lt:"チケット"},
   {d:"2026-12-31", t:"2026→2027 CALABASH COUNTDOWN PARTY", v:"下北沢BASEMENTBAR&THREE", a:"Glimpse Group / CheChe / Dead By Inches / Fried Banana Shop / Giallo / GeGeGe / o_all / から探し / からくりごっこ / 砂の壁 / 年齢バンド / マイティマウンテンズ", dj:"FREE THROW crew / G.B.K. / judgeman / New Action! crew / Sings crew / SPOT / 片山翔太 / カリン / 斎藤雄", img:"assets/calabash-2026.jpg", open:"19:00", start:"19:30", adv:"¥2,027 No Drink", door:"¥2,400 +1Drink", food:"寺田食堂 / ISARIBI", link:"https://livepocket.jp/e/calabash_cd_26_to_27", lt:"チケット"},
   {d:"2027-01-08", t:"Nikoん presents『新春謝罪会見2027』", v:"渋谷CLUB QUATTRO & PIT ZERO", a:"Nikoん / 4chi / Aishwaya / Buddha Jane / IMAGE VIDEO / Laments / Mimosa / NEW BABYLON / OSMO / the pars / Umisaya / Yellow Beams / 閻魔此れ虚 / 彼女が僕を殺しても / 旧作 / 弱社男性 / 底なしのバケツのようにざらざら / トトトト / ハイエナカー / バカ / 桃蟹 / やさしくなれない / らんまん", n:24, img:"assets/nikon-shazai-2027.jpg", open:"12:30", start:"13:00", adv:"¥2,027", feeNote:"+1Drink", link:"https://eplus.jp/sf/detail/4228040001?P6=001&P1=0402&P59=1", links:[["e+","https://eplus.jp/sf/detail/4228040001?P6=001&P1=0402&P59=1"],["チケットぴあ","https://t.pia.jp/"],["ローチケ","https://l-tike.com/concert/mevent/?mid=774011"]], lt:"チケット", note:"特典付き手売り\nチケット（¥3,500）\nNikoんのライブ会場限定"},
-  {d:"2027-01-16", t:"『ALCHL』", v:"下北沢THREE", a:"Glimpse Group / 神々のゴライコーズ / GRASAM ANIMAL", img:"assets/alchl.jpg", play:"18:30", open:"18:00", start:"18:30", price:"一般 ¥3,000（+1D） / STUDENTS ¥2,300（+1D）", link:"https://docs.google.com/forms/d/e/1FAIpQLSd9ee0_QiTh_O82xUE5_YMErL1N2vmp8WzcCH5yEUXa5ghCNw/viewform", fopt:"2027年1月16日(土)「ALCHL」@下北沢THREE"},
+  {d:"2027-01-16", t:"『ALCHL』", v:"下北沢THREE", a:"Glimpse Group / 神々のゴライコーズ / GRASAM ANIMAL", img:"assets/alchl.jpg", play:"18:30", open:"18:00", start:"18:30", price:"一般 ¥3,000（+1D） / STUDENTS ¥2,300（+1D）", link:"https://docs.google.com/forms/d/e/1FAIpQLSd9ee0_QiTh_O82xUE5_YMErL1N2vmp8WzcCH5yEUXa5ghCNw/viewform", fopt:"2027年1月16日(土)「ALCHL」@下北沢THREE", soldout:1},
   {d:"2027-02-12", t:"ラコ&シュナ pre.『i love you ! 〜きっといまなら〜』", v:"下北沢BASEMENTBAR", a:"錯乱前戦 / フー・ドゥ・ユー・ラブ / THE TAROS", img:"assets/i-love-you.jpg", imgs:["assets/i-love-you.jpg","assets/i-love-you-2.jpg","assets/i-love-you-3.jpg"], open:"18:30", start:"19:00", adv:"¥3,000", door:"¥3,500", feeNote:"+1Drink", food:"クジラ荘（HOT DOG）", link:"https://livepocket.jp/e/i_love_you_kitto_now", lt:"チケット"},
   {d:"2026-10-22", t:"THREE × UTERO pre. \"音音交換\"", v:"下北沢THREE", a:"弁天ランド / こっけ / デカりぼん / Silent Third / 心臓", img:"assets/onon-kokan.jpg"},
   {d:"2026-10-19", t:"4 SURE", v:"下北沢THREE", a:"COLUMBIAN NECKTIES (from DNK) / LBSTR", img:"assets/4-sure.jpg"},
@@ -1195,7 +1202,7 @@ function render(){
         '<div class="cvenue"></div>' +
         '<div class="cacts"></div>' +
         noteCardHTML(ev) +
-        (ev.upcoming && ev.link ? (isFormEvent(ev) ? '<button type="button" class="creserve" data-rsv="1">' + "<span class='tlab'>TICKET</span><span class='tstub'>→</span></button>" : (ev.links && ev.links.length > 1 ? '<button type="button" class="creserve" data-links="1">' + "<span class='tlab'>TICKET</span><span class='tstub'>→</span></button>" : '<a class="creserve" href="' + ev.link + '" target="_blank" rel="noopener">' + "<span class='tlab'>TICKET</span><span class='tstub'>→</span></a>")) : '') +
+        (ev.upcoming && ev.soldout ? '<span class="creserve soldout">' + "<span class='tlab'>SOLD OUT</span><span class='tstub'>✕</span></span>" : (ev.upcoming && ev.link ? (isFormEvent(ev) ? '<button type="button" class="creserve" data-rsv="1">' + "<span class='tlab'>TICKET</span><span class='tstub'>→</span></button>" : (ev.links && ev.links.length > 1 ? '<button type="button" class="creserve" data-links="1">' + "<span class='tlab'>TICKET</span><span class='tstub'>→</span></button>" : '<a class="creserve" href="' + ev.link + '" target="_blank" rel="noopener">' + "<span class='tlab'>TICKET</span><span class='tstub'>→</span></a>")) : '')) +
       '</div>';
     card.querySelector(".ctitle").textContent = ev.t;
     card.querySelector(".cvenue").textContent = vText(ev);
@@ -1274,7 +1281,7 @@ var lastFocus = null;
 var rsvSubmitted = false;
 var lbFormWanted = false;
 function isFormEvent(ev){
-  return !!(ev && ev.upcoming && ev.fopt && ev.link && ev.link.indexOf("docs.google.com/forms") !== -1);
+  return !!(ev && ev.upcoming && !ev.soldout && ev.fopt && ev.link && ev.link.indexOf("docs.google.com/forms") !== -1);
 }
 function fillRsvForm(ev){
   var wrap = document.getElementById("lbFormWrap");
@@ -1360,7 +1367,9 @@ function renderLB(){
   var lbFoodText = lbFoodEl.querySelector(".lb-food-text");
   if (lbFoodText) lbFoodText.textContent = foodText(ev);
   var lbRsvEl = document.getElementById("lbReserve");
-  if (isFormEvent(ev)){
+  if (ev.upcoming && ev.soldout){
+    lbRsvEl.innerHTML = '<span class="reserve soldout">' + "<span class='tlab'>SOLD OUT</span><span class='tstub'>✕</span></span>";
+  } else if (isFormEvent(ev)){
     lbRsvEl.innerHTML = '<button type="button" class="reserve" id="lbFormToggle">' + "<span class='tlab'>TICKET</span><span class='tstub'>→</span></button>";
     document.getElementById("lbFormToggle").addEventListener("click", function(){ expandRsvForm(); });
   } else if (ev.upcoming && ev.links && ev.links.length > 1){
@@ -1545,7 +1554,7 @@ document.getElementById("lbNext").addEventListener("click", function(){ stepLB(1
 /* チケット切り取り演出：演出が一瞬見えてから次の画面へ（ボタン型・リンク型とも約0.5秒遅らせて本来の動作へ） */
 document.addEventListener("click", function(e){
   var b = e.target.closest ? e.target.closest(".creserve,.reserve") : null;
-  if (!b || b.classList.contains("torn")) return;
+  if (!b || b.classList.contains("torn") || b.classList.contains("soldout")) return;
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   b.classList.add("torn");
   setTimeout(function(){ b.classList.remove("torn"); }, 1400);
